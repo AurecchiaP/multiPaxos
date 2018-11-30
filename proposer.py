@@ -1,5 +1,7 @@
 import sys
 import pickle
+import threading
+import time
 
 
 from node import Node
@@ -17,8 +19,10 @@ class Proposer(Node):
         self.val = {}
         self.received_1B_count = {}
         self.largest_v_rnd = {}
+        self.proposers_pings = {}
 
     def stay_alive(self):
+        threading.Thread(target=self.leader_election, name="election_thread", daemon=True).start()
         while True:
             data, addr = self.recv()
             inst, msg = pickle.loads(data)
@@ -45,6 +49,7 @@ class Proposer(Node):
                     if msg.v_rnd > self.largest_v_rnd[inst]:
                         self.largest_v_rnd[inst] = msg.v_rnd
                     if self.received_1B_count[inst] > 1:
+                        self.received_1B_count[inst] = 0  # FIXME HACK
                         print("quorum reached")
                         print(self.val)
                         if self.largest_v_rnd[inst] != 0:
@@ -54,6 +59,21 @@ class Proposer(Node):
                         message = Message("2A", state.ballot, None, None, state.ballot, state.c_val)
                         self.send((inst, message), "acceptors")
                 self.instances[inst] = state
+
+            elif msg.msg_type == "ELECTION":
+                self.proposers_pings[msg.v_val] = time.time()
+                # if we have more candidate leaders and the last received message from leader was more than 20s ago
+                if len(self.proposers_pings) > 1 and self.proposers_pings[self.leader] - time.time() > 2 * 10:
+                    # possibly the same leader, but still most recent
+                    self.leader = reversed(sorted(self.proposers_pings))[0]
+                    print("new leader: " + str(self.leader))
+
+    def leader_election(self):
+        while True:
+            # FIXME send ID properly
+            message = Message("ELECTION", None, None, self.id, None, None)
+            self.send((self.instance, message), "proposers")
+            time.sleep(10)
 
 
 if __name__ == '__main__':

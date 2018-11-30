@@ -41,7 +41,9 @@ class Node:
 
         # if the destination is to my same role (acceptors, proposers, learners)
         if dst == self.role:
-            return self.recv_sock.sendto(data, self.multicast_group)
+            print(self.multicast_group)
+            send_sock = self.create_socket(config[dst][0])
+            send_sock.sendto(data, self.multicast_group)
         else:
             send_sock = self.create_socket(config[dst][0])
             print("sending to " + str(config[dst][0]) + " " + str(config[dst][1]))
