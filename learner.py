@@ -17,11 +17,11 @@ class Learner(Node):
     def stay_alive(self):
         while True:
             data, addr = self.recv()
-            msg = pickle.loads(data)
+            inst, msg = pickle.loads(data)
             if msg.msg_type == "2B":
                 # fixme not ballot, but instance (of paxos)
-                if msg.ballot not in self.received_decisions:
-                    self.received_decisions[msg.ballot] = msg.v_val
+                if inst not in self.received_decisions:
+                    self.received_decisions[inst] = msg.v_val
                     print(msg.v_val)
 
 

@@ -26,7 +26,7 @@ class Client(Node):
         while True:
             val = input("write message to send: ")
             message = Message("0", None, None, val, None, None)
-            self.send(message, "proposers")
+            self.send((None, message), "proposers")
 
 
 if __name__ == '__main__':
