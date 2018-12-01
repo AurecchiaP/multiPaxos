@@ -17,40 +17,36 @@ config = load_config()
 
 
 class Node:
-
     def __init__(self, role):
-        self.role = role
-        self.multicast_group = tuple(config[self.role])
-        self.recv_sock = self.create_socket(self.multicast_group[0])
-        self.recv_sock.bind(self.multicast_group)
+        self.role = role    # one between clients, proposers, acceptors, learners
+        self.group = tuple(config[self.role])  # the (ip, port) of the group
+        self.receive_socket = self.create_socket(self.group[0])  # socket used to receive messages
+        self.receive_socket.bind(self.group)
 
-    def create_socket(self, dst):
+    @staticmethod
+    def create_socket(dst):
         # Create the datagram socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        new_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # Set the time-to-live for messages to 1 so they do not go past the
         # local network segment.
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', 1))
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
-                        struct.pack('4sL', socket.inet_aton(dst), socket.INADDR_ANY))
-        return sock
+        new_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', 1))
+        new_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        new_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
+                              struct.pack('4sL', socket.inet_aton(dst), socket.INADDR_ANY))
+        return new_socket
 
-    def send(self, msg, dst):
-        # print("Sending: message to " + dst)
-        data = pickle.dumps(msg)
+    def send(self, message, dst):
+        data = pickle.dumps(message)
 
-        # if the destination is to my same role (acceptors, proposers, learners)
+        # if the destination is to my same role
         if dst == self.role:
-            print(self.multicast_group)
-            send_sock = self.create_socket(config[dst][0])
-            send_sock.sendto(data, self.multicast_group)
+            send_socket = self.create_socket(config[dst][0])
+            send_socket.sendto(data, self.group)
         else:
-            send_sock = self.create_socket(config[dst][0])
-            print("sending to " + str(config[dst][0]) + " " + str(config[dst][1]))
-            send_sock.sendto(data, tuple(config[dst]))
-            send_sock.close()
+            send_socket = self.create_socket(config[dst][0])
+            send_socket.sendto(data, tuple(config[dst]))
+            send_socket.close()
 
-    def recv(self):
-        # print("receiving")
-        data, addr = self.recv_sock.recvfrom(1024)
-        return data, addr
+    def receive(self):
+        data, address = self.receive_socket.recvfrom(1024)
+        return data, address

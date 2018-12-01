@@ -5,14 +5,13 @@ from message import Message
 class Client(Node):
     def __init__(self):
         super().__init__('clients')
-        self.id = 0
-        self.leader = self.id
-        self.state = {}
+        self.id = 0             # id of the client
+        self.leader = self.id   # not used
 
     def await_message(self):
         while True:
-            val = input("write message to send: ")
-            message = Message("0", None, None, val, None, None)
+            value = input("write message to send: ")
+            message = Message(msg_type="0", v_val=value)
             self.send((None, message), "proposers")
 
 

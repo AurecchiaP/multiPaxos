@@ -1,26 +1,23 @@
 import sys
 import pickle
 
-
 from node import Node
 
 
 class Learner(Node):
     def __init__(self, _id):
         super().__init__('learners')
-        self.id = _id
-        self.leader = self.id
-        self.received_decisions = {}
+        self.id = _id                   # id of learner
+        self.received_decisions = {}    # dict of {paxos_instance : decision}
 
     def stay_alive(self):
         while True:
-            data, addr = self.recv()
-            inst, msg = pickle.loads(data)
-            if msg.msg_type == "2B":
-                # fixme not ballot, but instance (of paxos)
-                if inst not in self.received_decisions:
-                    self.received_decisions[inst] = msg.v_val
-                    print(msg.v_val)
+            data, address = self.receive()
+            instance, message = pickle.loads(data)
+            if message.msg_type == "2B":
+                if instance not in self.received_decisions:
+                    self.received_decisions[instance] = message.v_val
+                    print(message.v_val)
 
 
 if __name__ == '__main__':
