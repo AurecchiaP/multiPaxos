@@ -10,7 +10,7 @@ class Learner(Node):
         self.id = _id                   # id of learner
         self.received_decisions = {}    # dict of {paxos_instance : decision}
 
-    def stay_alive(self):
+    def receiver_loop(self):
         while True:
             data, address = self.receive()
             instance, message = pickle.loads(data)
@@ -25,4 +25,4 @@ if __name__ == '__main__':
         print("give the id of the learners")
         sys.exit()
     learner = Learner(sys.argv[1])
-    learner.stay_alive()
+    learner.receiver_loop()

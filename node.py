@@ -18,8 +18,8 @@ config = load_config()
 
 class Node:
     def __init__(self, role):
-        self.role = role    # one between clients, proposers, acceptors, learners
-        self.group = tuple(config[self.role])  # the (ip, port) of the group
+        self.role = role                                         # one between clients, proposers, acceptors, learners
+        self.group = tuple(config[self.role])                    # the (ip, port) of the group
         self.receive_socket = self.create_socket(self.group[0])  # socket used to receive messages
         self.receive_socket.bind(self.group)
 

@@ -11,7 +11,7 @@ class Acceptor(Node):
         self.id = _id        # id of the acceptor
         self.instances = {}  # set of Paxos instances, with {instance_number : state}
 
-    def stay_alive(self):
+    def receiver_loop(self):
         while True:
             data, address = self.receive()
             instance, message = pickle.loads(data)
@@ -57,4 +57,4 @@ if __name__ == '__main__':
         print("give the id of the acceptors")
         sys.exit()
     acceptor = Acceptor(sys.argv[1])
-    acceptor.stay_alive()
+    acceptor.receiver_loop()

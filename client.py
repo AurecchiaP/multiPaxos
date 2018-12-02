@@ -8,7 +8,7 @@ class Client(Node):
         self.id = 0             # id of the client
         self.leader = self.id   # not used
 
-    def await_message(self):
+    def await_user_input(self):
         while True:
             value = input("write message to send: ")
             message = Message(msg_type="0", v_val=value)
@@ -17,4 +17,4 @@ class Client(Node):
 
 if __name__ == '__main__':
     client = Client()
-    client.await_message()
+    client.await_user_input()
