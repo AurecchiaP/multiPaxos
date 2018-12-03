@@ -12,6 +12,7 @@ class Proposer(Node):
         super().__init__('proposers')
         self.id = _id                # id of the proposer
         self.instance = 0            # number of most recent Paxos instance
+        self.instance_decided = {}   # dict {paxos_instance : decided} keeps track of which instances have been decided
         self.instances = {}          # dict {paxos_instance : state} stores the Paxos state for each instance
         self.leader = self.id        # current leader
         self.val = {}                # dict {paxos_instance : v} that stores the proposed value for Paxos inst
@@ -32,16 +33,21 @@ class Proposer(Node):
                 if message.leader < self.leader:
                     self.leader = message.leader
                     print("new leader: " + str(self.leader))
-                print(self.proposers_pings[self.leader])
-                print(time.time() - self.proposers_pings[self.leader])
                 # if we haven't heard from the leader in a while, elect a new leader
                 if time.time() - self.proposers_pings[self.leader] > 20:
                     del self.proposers_pings[self.leader]
                     self.leader = sorted(self.proposers_pings.keys())[0]
                     print("new leader: " + str(self.leader))
 
+            elif message.msg_type == "CATCHUP":
+                # FIXME should use instance_decided, not instances
+                print(self.instances)
+                new_message = Message(msg_type="2B", v_val=self.instance_decided[instance])
+                # new_message = Message(msg_type="2B", v_val=self.instances[instance].v_val)
+                self.send((instance, new_message), "learners")
+
             # we handle the message if it type 0(a message from a client) or if we are the current leader
-            if message.msg_type == "0" or message.leader == self.leader:
+            if message.msg_type == "0" or message.msg_type == "2B" or message.leader == self.leader:
                 if message.msg_type == "0":
                     self.instances[self.instance] = message
                     state = self.instances[self.instance]
@@ -72,10 +78,14 @@ class Proposer(Node):
                                 state.c_val = self.val[instance]
                             new_message = Message(msg_type="2A",
                                                   ballot=state.ballot,
+                                                  leader=self.leader,
                                                   c_rnd=state.ballot,
                                                   c_val=state.c_val)
                             self.send((instance, new_message), "acceptors")
                     self.instances[instance] = state
+
+                elif message.msg_type == "2B":
+                    self.instance_decided[instance] = message.v_val
 
     def leader_election(self):
         while True:
