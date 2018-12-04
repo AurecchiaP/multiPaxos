@@ -49,7 +49,6 @@ class Acceptor(Node):
                                     v_rnd=state.v_rnd,
                                     v_val=state.v_val)
                     self.send((instance, reply), "proposers")
-                    self.send((instance, reply), "learners")
                 self.instances[instance] = state
 
 
