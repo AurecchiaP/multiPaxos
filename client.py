@@ -1,11 +1,13 @@
+import sys
+
 from node import Node
 from message import Message
 
 
 class Client(Node):
-    def __init__(self):
+    def __init__(self, _id):
         super().__init__('clients')
-        self.id = 0             # id of the client
+        self.id = _id           # id of the client
         self.leader = self.id   # not used
 
     def await_user_input(self):
@@ -16,5 +18,8 @@ class Client(Node):
 
 
 if __name__ == '__main__':
-    client = Client()
+    if len(sys.argv) < 2:
+        print("give the id of the client")
+        sys.exit()
+    client = Client(sys.argv[1])
     client.await_user_input()
