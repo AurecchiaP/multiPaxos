@@ -28,13 +28,14 @@ class Learner(Node):
                 if instance not in self.received_decisions:
                     self.received_decisions[instance] = message.v_val
                 # if we can deliver/print the next message in order, do so and update the learner's state
-                # TODO check if works
                 while self.last_delivered < self.max_instance and self.last_delivered + 1 in self.received_decisions:
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
-                if self.last_delivered < self.max_instance:
-                    new_message = Message(msg_type="CATCHUP")
-                    self.send((self.last_delivered + 1, new_message), "proposers")
+                # if self.last_delivered < self.max_instance:
+                for instance in range(self.last_delivered + 1, self.max_instance + 1):
+                    if instance not in self.received_decisions:
+                        new_message = Message(msg_type="CATCHUP")
+                        self.send((instance, new_message), "proposers")
 
 
 if __name__ == '__main__':

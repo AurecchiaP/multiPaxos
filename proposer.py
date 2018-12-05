@@ -15,7 +15,6 @@ class Proposer(Node):
         self.instances_decided = {}  # dict {paxos_instance : decided} keeps track of which instances have been decided
         self.instances = {}          # dict {paxos_instance : state} stores the Paxos state for each instance
         self.leader = self.id        # current leader
-        # self.val = {}                # dict {paxos_instance : v} that stores the proposed value for Paxos inst
         self.received_1B_count = {}  # dict {paxos_instance : v} that stores the number of msg received for Paxos inst
         self.received_2B_count = {}  # dict {paxos_instance : v} that stores the number of msg received for Paxos inst
         self.largest_v_rnd = {}      # dict {paxos_instance : v} that stores the largest v_rnd received for Paxos inst
@@ -48,12 +47,10 @@ class Proposer(Node):
                 # if we received a ping from someone with a lower id, he's the leader
                 if message.id < self.leader:
                     self.leader = message.id
-                    # print("new leader: " + str(self.leader))
                 # if we haven't heard from the leader in a while, elect a new leader
                 if self.leader != self.id and time.time() - self.proposers_pings[self.leader] > 5:
                     del self.proposers_pings[self.leader]
                     self.leader = sorted(self.proposers_pings.keys())[0]
-                    # print("new leader: " + str(self.leader))
 
             elif message.msg_type == "CATCHUP":
                 if instance in self.instances_decided: # if this proposer knows about the previous decision
@@ -62,21 +59,13 @@ class Proposer(Node):
                     self.send((instance, new_message), "learners")
 
             # we handle the message if it's type 0(a message from a client) if it's a 2B or if we are the current leader
-            # if message.msg_type == "0" or message.msg_type == "2B" or message.leader == self.leader:
-            if message.msg_type == "0" or message.msg_type == "2B" or message.leader == self.leader:
+            elif message.msg_type == "0" or message.msg_type == "2B" or message.leader == self.leader:
                 if message.msg_type == "0" and self.leader == self.id:
-                    # print("id:" + str(self.id) + ", instance:" + str(self.instance) + "val:" + str(message.v_val))
-                    # FIXME PORCO
-                    # self.client_values.append(message.v_val)
                     self.client_values[self.instance] = message.v_val
-                    # fixme this breaks the normal paxos
-                    # if not self.is_updated and len(self.instances) > len(self.instances_decided):
-                    #     continue  # if we are catching up, we cannot run multiple paxos instances at once
                     self.instances[self.instance] = message
                     state = self.instances[self.instance]
                     # update state
                     state.ballot += 10
-                    # self.val[self.instance] = message.v_val
                     self.received_1B_count[self.instance] = 0
                     self.received_2B_count[self.instance] = 0
                     self.largest_v_rnd[self.instance] = 0
@@ -88,7 +77,6 @@ class Proposer(Node):
 
                 elif message.msg_type == "1B":
                     # check if the ballot of this message is the correct one
-                    # state = self.instances[instance]
                     if instance not in self.instances:
                         self.instances[instance] = Message()
                     state = self.instances[instance]
@@ -97,14 +85,9 @@ class Proposer(Node):
                         if message.v_rnd > self.largest_v_rnd[instance]:
                             self.largest_v_rnd[instance] = message.v_rnd
                         if self.received_1B_count[instance] > 1:
-                            # print("quorum reached")
                             if self.largest_v_rnd[instance] != 0:
                                 state.c_val = message.v_val
                             else:
-                                # state.c_val = self.val[instance]
-                                if instance not in self.client_values:
-                                    print('instance= ' + str(instance) + "\n" + message.to_string())
-                                    print(self.client_values)
                                 state.c_val = self.client_values[instance]
                             new_message = Message(msg_type="2A",
                                                   ballot=state.ballot,
@@ -115,12 +98,10 @@ class Proposer(Node):
                     self.instances[instance] = state
 
                 elif message.msg_type == "2B":
-                    #fixme hack
                     if instance not in self.received_2B_count:
                         self.received_2B_count[instance] = 0
                     self.received_2B_count[instance] += 1
                     if self.received_2B_count[instance] > 1:
-                        # print("decided " + str(message.v_val))
                         self.instances_decided[instance] = message.v_val
                         if self.leader == self.id:
                             reply = Message(msg_type="2B",
@@ -129,14 +110,7 @@ class Proposer(Node):
                                             v_rnd=message.v_rnd,
                                             v_val=message.v_val)
                             self.send((instance, reply), "learners")
-                           # if the decided message was not the one we were trying to propose
-                        # if len(self.client_values) > instance and self.client_values[instance] != message.v_val:
-                        #fixme PORCO
-                        # self.client_values.insert(instance, message.v_val)
                         self.client_values[instance] = message.v_val
-                        # else:
-                            # if not self.is_updated:
-                            #     self.is_updated = True
 
     def leader_election(self):
         while True:
