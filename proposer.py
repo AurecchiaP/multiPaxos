@@ -84,7 +84,6 @@ class Proposer(Node):
                         if message.v_rnd > self.largest_v_rnd[instance]:
                             self.largest_v_rnd[instance] = message.v_rnd
                         if self.received_1B_count[instance] > 1:
-                            # FIXME this sends more than one 2A since we reach more quorums
                             print("quorum reached")
                             if self.largest_v_rnd[instance] != 0:
                                 state.c_val = message.v_val
