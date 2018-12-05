@@ -15,8 +15,8 @@ class Acceptor(Node):
         while True:
             data, address = self.receive()
             instance, message = pickle.loads(data)
-            print("\n================= received message =================")
-            print('instance= ' + str(instance) + "\n" + message.to_string())
+            # print("\n================= received message =================")
+            # print('instance= ' + str(instance) + "\n" + message.to_string())
             # upon receive 1A
             # TODO should I check if message was sent by leader? does the acceptor even know who the leader is?
             if message.msg_type == "1A":

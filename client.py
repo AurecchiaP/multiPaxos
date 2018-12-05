@@ -11,10 +11,14 @@ class Client(Node):
         self.leader = self.id   # not used
 
     def await_user_input(self):
-        while True:
-            value = input("write message to send: ")
-            message = Message(msg_type="0", v_val=value)
-            self.send((None, message), "proposers")
+        try:
+            while True:
+                value = input("write message to send: ")
+                message = Message(msg_type="0", v_val=value)
+                self.send((None, message), "proposers")
+        except EOFError:
+            print("EOF reached")
+            sys.exit()
 
 
 if __name__ == '__main__':

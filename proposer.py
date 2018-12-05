@@ -37,24 +37,25 @@ class Proposer(Node):
             data, address = self.receive()
             instance, message = pickle.loads(data)
 
-            print("\n================= received message =================")
-            print('instance= ' + str(instance) + "\n" + message.to_string())
+            # print("\n================= received message =================")
+            # print('instance= ' + str(instance) + "\n" + message.to_string())
             if message.msg_type == "ELECTION":
                 self.proposers_pings[message.id] = time.time()
                 # if we received a ping from someone with a lower id, he's the leader
                 if message.leader < self.leader:
                     self.leader = message.leader
-                    print("new leader: " + str(self.leader))
+                    # print("new leader: " + str(self.leader))
                 # if we haven't heard from the leader in a while, elect a new leader
-                if time.time() - self.proposers_pings[self.leader] > 20:
+                if self.leader != self.id and time.time() - self.proposers_pings[self.leader] > 20:
                     del self.proposers_pings[self.leader]
                     self.leader = sorted(self.proposers_pings.keys())[0]
-                    print("new leader: " + str(self.leader))
+                    # print("new leader: " + str(self.leader))
 
             elif message.msg_type == "CATCHUP":
-                new_message = Message(msg_type="2B", v_val=self.instances_decided[instance])
-                # new_message = Message(msg_type="2B", v_val=self.instances[instance].v_val)
-                self.send((instance, new_message), "learners")
+                if instance in self.instances_decided: # if this proposer knows about the previous decision
+                    new_message = Message(msg_type="2B", v_val=self.instances_decided[instance])
+                    # new_message = Message(msg_type="2B", v_val=self.instances[instance].v_val)
+                    self.send((instance, new_message), "learners")
 
             # we handle the message if it's type 0(a message from a client) if it's a 2B or if we are the current leader
             if message.msg_type == "0" or message.msg_type == "2B" or message.leader == self.leader:
@@ -84,7 +85,7 @@ class Proposer(Node):
                         if message.v_rnd > self.largest_v_rnd[instance]:
                             self.largest_v_rnd[instance] = message.v_rnd
                         if self.received_1B_count[instance] > 1:
-                            print("quorum reached")
+                            # print("quorum reached")
                             if self.largest_v_rnd[instance] != 0:
                                 state.c_val = message.v_val
                             else:
@@ -99,9 +100,12 @@ class Proposer(Node):
                     self.instances[instance] = state
 
                 elif message.msg_type == "2B":
+                    #fixme hack
+                    if instance not in self.received_2B_count:
+                        self.received_2B_count[instance] = 0
                     self.received_2B_count[instance] += 1
                     if self.received_1B_count[instance] > 1:
-                        print("decided " + str(message.v_val))
+                        # print("decided " + str(message.v_val))
                         self.instances_decided[instance] = message.v_val
                         reply = Message(msg_type="2B",
                                         leader=message.leader,
@@ -128,9 +132,8 @@ class Proposer(Node):
             if self.leader == self.id:
                 for instance, start_time in self.instances_start_time.items():
                     if instance not in self.instances_decided and time.time() - start_time > 5:
-                        # print("timeout " + str(instance))
                         state = self.instances[instance]
-                        state.ballot += 10
+                        state.ballot += 100
                         if state.msg_type == "1B" and self.received_1B_count[instance] > 1:
                             # we had reached a quorum; resend 2A
                             new_message = Message(msg_type="2A",

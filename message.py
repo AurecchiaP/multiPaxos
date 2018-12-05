@@ -13,6 +13,6 @@ class Message:
         self.c_val = kwargs.pop('c_val', None)
 
     def to_string(self):
-        return "msg_type= {0}\nballot\t= {1}\nleader\t= {2}\nid\t= {3}\nv_rnd\t= {4}\nv_val\t= {5}" \
-               "\nc_rnd\t= {6}\nc_val\t= {7}".format(self.msg_type, self.ballot, self.leader, self.id, self.v_rnd,
+        return "msg_type= {0}, ballot\t= {1}, leader\t= {2}, id\t= {3}, v_rnd\t= {4}, v_val\t= {5}" \
+               ", c_rnd\t= {6}, c_val\t= {7}".format(self.msg_type, self.ballot, self.leader, self.id, self.v_rnd,
                                                      self.v_val, self.c_rnd, self.c_val)

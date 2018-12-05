@@ -31,7 +31,7 @@ class Learner(Node):
                 # TODO check if works
                 while self.last_delivered < self.max_instance and self.last_delivered + 1 in self.received_decisions:
                     self.last_delivered += 1
-                    print(self.received_decisions[self.last_delivered])
+                    print(self.received_decisions[self.last_delivered], flush=True)
                 if self.last_delivered < self.max_instance:
                     new_message = Message(msg_type="CATCHUP")
                     self.send((self.last_delivered + 1, new_message), "proposers")
