@@ -13,7 +13,8 @@ class Client(Node):
     def await_user_input(self):
         try:
             while True:
-                value = input("write message to send: ")
+                # value = input("write message to send: ")
+                value = input()
                 message = Message(msg_type="0", v_val=value)
                 self.send((None, message), "proposers")
         except EOFError:
