@@ -1,5 +1,4 @@
 import sys
-import pickle
 import threading
 import time
 
@@ -33,8 +32,7 @@ class Proposer(Node):
         self.election_thread.start()
         self.timeout_thread.start()
         while True:
-            data, address = self.receive()
-            instance, message = pickle.loads(data)
+            instance, message = self.receive()
 
             # if self.leader == self.id and message.msg_type != "ELECTION" and message.msg_type != "0":
                 # print("\n================= received message =================")

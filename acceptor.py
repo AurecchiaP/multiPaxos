@@ -1,5 +1,4 @@
 import sys
-import pickle
 
 from node import Node
 from message import Message
@@ -13,8 +12,7 @@ class Acceptor(Node):
 
     def receiver_loop(self):
         while True:
-            data, address = self.receive()
-            instance, message = pickle.loads(data)
+            instance, message = self.receive()
             # print("\n================= received message =================")
             # print('instance= ' + str(instance) + "\n" + message.to_string())
             # upon receive 1A

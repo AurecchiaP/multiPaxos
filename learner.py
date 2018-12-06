@@ -1,5 +1,4 @@
 import sys
-import pickle
 
 from node import Node
 from message import Message
@@ -17,8 +16,7 @@ class Learner(Node):
     def receiver_loop(self):
         while True:
             # receive a message
-            data, address = self.receive()
-            instance, message = pickle.loads(data)
+            instance, message = self.receive()
             # if it is a decision message (2B)
             if message.msg_type == "2B":
                 # if this instance is the greatest one we have seen so far, update the max_instance

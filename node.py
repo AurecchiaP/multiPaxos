@@ -49,4 +49,5 @@ class Node:
 
     def receive(self):
         data, address = self.receive_socket.recvfrom(1024)
-        return data, address
+        instance, message = pickle.loads(data)
+        return instance, message

@@ -1,3 +1,5 @@
+import pickle
+
 class Message:
 
     # TODO instance atm not used
@@ -11,6 +13,12 @@ class Message:
         self.v_val = kwargs.pop('v_val', None)
         self.c_rnd = kwargs.pop('c_rnd', 0)
         self.c_val = kwargs.pop('c_val', None)
+
+    def serialize(self):
+        return pickle.dumps(self)
+
+    def deserialize(self):
+        return pickle.loads(self)
 
     def to_string(self):
         return "msg_type= {0}, ballot\t= {1}, leader\t= {2}, id\t= {3}, v_rnd\t= {4}, v_val\t= {5}" \
