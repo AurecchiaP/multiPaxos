@@ -34,10 +34,15 @@ class Learner(Node):
                 for instance in range(self.last_delivered + 1, self.max_instance + 1):
                     if instance not in self.received_decisions:
                         missing_values.append(instance)
+                    # # todo make sure that this still fits in the packets
                 if len(missing_values) > 0:
-                    # todo check max size of message
-                    new_message = Message(msg_type="CATCHUPA", v_val=missing_values)
-                    self.send((instance, new_message), "proposers")
+                    chunks = [missing_values[x:x + 20] for x in range(0, len(missing_values), 20)]
+                    for chunk in chunks:
+                        # print("CHUNK ==============================================================================")
+                        # print(chunk)
+                        # print("CHUNK ------------------------------------------------------------------------------")
+                        new_message = Message(msg_type="CATCHUPA", v_val=chunk)
+                        self.send((instance, new_message), "proposers")
 
             elif message.msg_type == "CATCHUPB":
                 received_values = message.v_val
@@ -52,10 +57,15 @@ class Learner(Node):
                 for instance in range(self.last_delivered + 1, self.max_instance + 1):
                     if instance not in self.received_decisions:
                         missing_values.append(instance)
+                    # # todo make sure that this still fits in the packets
                 if len(missing_values) > 0:
-                    # todo check max size of message
-                    new_message = Message(msg_type="CATCHUPA", v_val=missing_values)
-                    self.send((instance, new_message), "proposers")
+                    chunks = [missing_values[x:x + 20] for x in range(0, len(missing_values), 20)]
+                    for chunk in chunks:
+                        # print("CHUNK ==============================================================================")
+                        # print(chunk)
+                        # print("CHUNK ------------------------------------------------------------------------------")
+                        new_message = Message(msg_type="CATCHUPA", v_val=chunk)
+                        self.send((instance, new_message), "proposers")
 
 
 

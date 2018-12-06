@@ -5,6 +5,9 @@ import time
 from node import Node
 from message import Message
 
+# from pympler import asizeof
+
+
 
 class Proposer(Node):
     def __init__(self, _id):
@@ -23,6 +26,8 @@ class Proposer(Node):
         self.client_values = {}
 
         self.is_updated = False      # if it was able to decide a first value, aka it is not trying to catch-up
+
+        self.count = False
 
         # create the two threads for the timeout of messages and the leader election messages
         self.timeout_thread = threading.Thread(target=self.message_timeout, name="timeout_thread", daemon=True)
@@ -55,9 +60,15 @@ class Proposer(Node):
                 values = message.v_val
                 reply_values = {}
                 for instance in range(len(values)):
-                    if instance in self.instances_decided: # if this proposer knows about the previous decision
-                        reply_values[instance] = self.instances_decided[instance]
+                    if values[instance] in self.instances_decided: # if this proposer knows about the previous decision
+                        reply_values[values[instance]] = self.instances_decided[values[instance]]
+                    # todo make sure that this still fits in the packets
+                    if sys.getsizeof(reply_values) > 2048:
+                        sys.getsizeof(reply_values)
+                        break
                 new_message = Message(msg_type="CATCHUPB", v_val=reply_values)
+                if not self.count:
+                    self.count = True
                 # new_message = Message(msg_type="2B", v_val=self.instances[instance].v_val)
                 self.send((instance, new_message), "learners")
 
