@@ -29,46 +29,31 @@ class Learner(Node):
                 while self.last_delivered < self.max_instance and self.last_delivered + 1 in self.received_decisions:
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
-                # if self.last_delivered < self.max_instance:
-                missing_values = []
-                for instance in range(self.last_delivered + 1, self.max_instance + 1):
-                    if instance not in self.received_decisions:
-                        missing_values.append(instance)
-                    # # todo make sure that this still fits in the packets
-                if len(missing_values) > 0:
-                    chunks = [missing_values[x:x + 20] for x in range(0, len(missing_values), 20)]
-                    for chunk in chunks:
-                        # print("CHUNK ==============================================================================")
-                        # print(chunk)
-                        # print("CHUNK ------------------------------------------------------------------------------")
-                        new_message = Message(msg_type="CATCHUPA", v_val=chunk)
-                        self.send((instance, new_message), "proposers")
+                self.ask_missing_values()
 
-            elif message.msg_type == "CATCHUPB":
+            elif message.msg_type == "CATCHUP_B":
                 received_values = message.v_val
                 for instance, value in received_values.items():
                     if instance not in self.received_decisions:
                         self.received_decisions[instance] = value
+                # if we can deliver/print the next message in order, do so and update the learner's state
                 while self.last_delivered < self.max_instance and self.last_delivered + 1 in self.received_decisions:
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
-                # if self.last_delivered < self.max_instance:
-                missing_values = []
-                for instance in range(self.last_delivered + 1, self.max_instance + 1):
-                    if instance not in self.received_decisions:
-                        missing_values.append(instance)
-                    # # todo make sure that this still fits in the packets
-                if len(missing_values) > 0:
-                    chunks = [missing_values[x:x + 20] for x in range(0, len(missing_values), 20)]
-                    for chunk in chunks:
-                        # print("CHUNK ==============================================================================")
-                        # print(chunk)
-                        # print("CHUNK ------------------------------------------------------------------------------")
-                        new_message = Message(msg_type="CATCHUPA", v_val=chunk)
-                        self.send((instance, new_message), "proposers")
 
+                self.ask_missing_values()
 
-
+    def ask_missing_values(self):
+        missing_values = []
+        for instance in range(self.last_delivered + 1, self.max_instance + 1):
+            if instance not in self.received_decisions:
+                missing_values.append(instance)
+            # todo make sure that this still fits in the packets
+        if len(missing_values) > 0:
+            chunks = [missing_values[x:x + 20] for x in range(0, len(missing_values), 20)]
+            for chunk in chunks:
+                new_message = Message(msg_type="CATCHUP_A", v_val=chunk)
+                self.send((None, new_message), "proposers")
 
 
 if __name__ == '__main__':

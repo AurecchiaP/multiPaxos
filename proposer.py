@@ -8,7 +8,6 @@ from message import Message
 # from pympler import asizeof
 
 
-
 class Proposer(Node):
     def __init__(self, _id):
         super().__init__('proposers')
@@ -24,10 +23,6 @@ class Proposer(Node):
         self.instances_start_time = {}  # dict {instance : time} that stores when we started this instance
 
         self.client_values = {}
-
-        self.is_updated = False      # if it was able to decide a first value, aka it is not trying to catch-up
-
-        self.count = False
 
         # create the two threads for the timeout of messages and the leader election messages
         self.timeout_thread = threading.Thread(target=self.message_timeout, name="timeout_thread", daemon=True)
@@ -55,7 +50,7 @@ class Proposer(Node):
                     del self.proposers_pings[self.leader]
                     self.leader = sorted(self.proposers_pings.keys())[0]
 
-            elif message.msg_type == "CATCHUPA":
+            elif message.msg_type == "CATCHUP_A":
                 # todo check max size of reply message
                 values = message.v_val
                 reply_values = {}
@@ -66,10 +61,7 @@ class Proposer(Node):
                     if sys.getsizeof(reply_values) > 2048:
                         sys.getsizeof(reply_values)
                         break
-                new_message = Message(msg_type="CATCHUPB", v_val=reply_values)
-                if not self.count:
-                    self.count = True
-                # new_message = Message(msg_type="2B", v_val=self.instances[instance].v_val)
+                new_message = Message(msg_type="CATCHUP_B", v_val=reply_values)
                 self.send((instance, new_message), "learners")
 
             # we handle the message if it's type 0(a message from a client) if it's a 2B or if we are the current leader
