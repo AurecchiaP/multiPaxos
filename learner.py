@@ -30,10 +30,35 @@ class Learner(Node):
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
                 # if self.last_delivered < self.max_instance:
+                missing_values = []
                 for instance in range(self.last_delivered + 1, self.max_instance + 1):
                     if instance not in self.received_decisions:
-                        new_message = Message(msg_type="CATCHUP")
-                        self.send((instance, new_message), "proposers")
+                        missing_values.append(instance)
+                if len(missing_values) > 0:
+                    # todo check max size of message
+                    new_message = Message(msg_type="CATCHUPA", v_val=missing_values)
+                    self.send((instance, new_message), "proposers")
+
+            elif message.msg_type == "CATCHUPB":
+                received_values = message.v_val
+                for instance, value in received_values.items():
+                    if instance not in self.received_decisions:
+                        self.received_decisions[instance] = value
+                while self.last_delivered < self.max_instance and self.last_delivered + 1 in self.received_decisions:
+                    self.last_delivered += 1
+                    print(self.received_decisions[self.last_delivered], flush=True)
+                # if self.last_delivered < self.max_instance:
+                missing_values = []
+                for instance in range(self.last_delivered + 1, self.max_instance + 1):
+                    if instance not in self.received_decisions:
+                        missing_values.append(instance)
+                if len(missing_values) > 0:
+                    # todo check max size of message
+                    new_message = Message(msg_type="CATCHUPA", v_val=missing_values)
+                    self.send((instance, new_message), "proposers")
+
+
+
 
 
 if __name__ == '__main__':

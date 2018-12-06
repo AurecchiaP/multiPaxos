@@ -50,11 +50,16 @@ class Proposer(Node):
                     del self.proposers_pings[self.leader]
                     self.leader = sorted(self.proposers_pings.keys())[0]
 
-            elif message.msg_type == "CATCHUP":
-                if instance in self.instances_decided: # if this proposer knows about the previous decision
-                    new_message = Message(msg_type="2B", v_val=self.instances_decided[instance])
-                    # new_message = Message(msg_type="2B", v_val=self.instances[instance].v_val)
-                    self.send((instance, new_message), "learners")
+            elif message.msg_type == "CATCHUPA":
+                # todo check max size of reply message
+                values = message.v_val
+                reply_values = {}
+                for instance in range(len(values)):
+                    if instance in self.instances_decided: # if this proposer knows about the previous decision
+                        reply_values[instance] = self.instances_decided[instance]
+                new_message = Message(msg_type="CATCHUPB", v_val=reply_values)
+                # new_message = Message(msg_type="2B", v_val=self.instances[instance].v_val)
+                self.send((instance, new_message), "learners")
 
             # we handle the message if it's type 0(a message from a client) if it's a 2B or if we are the current leader
             elif message.msg_type == "0" or message.msg_type == "2B" or message.leader == self.leader:
@@ -102,11 +107,7 @@ class Proposer(Node):
                     if self.received_2B_count[instance] > 1:
                         self.instances_decided[instance] = message.v_val
                         if self.leader == self.id:
-                            reply = Message(msg_type="2B",
-                                            leader=message.leader,
-                                            ballot=message.ballot,
-                                            v_rnd=message.v_rnd,
-                                            v_val=message.v_val)
+                            reply = Message(msg_type="2B", v_val=message.v_val)
                             self.send((instance, reply), "learners")
                         self.client_values[instance] = message.v_val
 

@@ -48,6 +48,6 @@ class Node:
             send_socket.close()
 
     def receive(self):
-        data, address = self.receive_socket.recvfrom(1024)
+        data, address = self.receive_socket.recvfrom(4096)
         instance, message = pickle.loads(data)
         return instance, message
