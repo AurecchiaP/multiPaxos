@@ -1,8 +1,9 @@
 import pickle
 
+
 class Message:
 
-    # TODO instance atm not used
+    # TODO instance atm not used, sent alongside the message
     def __init__(self, **kwargs):
         self.msg_type = kwargs.pop('msg_type', None)
         self.instance = kwargs.pop('instance', None)

@@ -1,4 +1,5 @@
 import sys
+import time
 
 from node import Node
 from message import Message
@@ -9,6 +10,7 @@ class Client(Node):
         super().__init__('clients')
         self.id = _id           # id of the client
         self.leader = self.id   # not used
+        self.count = 0
 
     def await_user_input(self):
         try:
@@ -17,6 +19,11 @@ class Client(Node):
                 value = input()
                 message = Message(msg_type="0", v_val=value)
                 self.send((None, message), "proposers")
+                # if we run the whole thing on one machine, this may avoid the OS getting overfilled with messages
+                self.count += 1
+                if self.count == 250:
+                    self.count = 0
+                    time.sleep(2)
         except EOFError:
             print("EOF reached")
             sys.exit()

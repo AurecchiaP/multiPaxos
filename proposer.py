@@ -5,6 +5,9 @@ import time
 from node import Node
 from message import Message
 
+lock = threading.Lock()
+
+
 # from pympler import asizeof
 
 
@@ -21,6 +24,8 @@ class Proposer(Node):
         self.largest_v_rnd = {}      # dict {paxos_instance : v} that stores the largest v_rnd received for Paxos inst
         self.proposers_pings = {}    # dict {proposer_id : time} that stores when we received the last ping from them
         self.instances_start_time = {}  # dict {instance : time} that stores when we started this instance
+
+        self.count = 0
 
         self.client_values = {}
 
@@ -58,14 +63,17 @@ class Proposer(Node):
                     if values[instance] in self.instances_decided: # if this proposer knows about the previous decision
                         reply_values[values[instance]] = self.instances_decided[values[instance]]
                     # todo make sure that this still fits in the packets
-                    if sys.getsizeof(reply_values) > 2048:
-                        sys.getsizeof(reply_values)
-                        break
+                    # if sys.getsizeof(reply_values) > 2048:
+                    #     sys.getsizeof(reply_values)
+                    #     break
                 new_message = Message(msg_type="CATCHUP_B", v_val=reply_values)
                 self.send((instance, new_message), "learners")
 
             # we handle the message if it's type 0(a message from a client) if it's a 2B or if we are the current leader
             elif message.msg_type == "0" or message.msg_type == "2B" or message.leader == self.leader:
+                if message.msg_type == "0":
+                    # self.count += 1
+                    # print(self.count)
                 if message.msg_type == "0" and self.leader == self.id:
                     self.client_values[self.instance] = message.v_val
                     self.instances[self.instance] = message
@@ -78,7 +86,8 @@ class Proposer(Node):
                     new_message = Message(msg_type="1A", ballot=state.ballot, leader=self.leader)
                     self.instances[self.instance] = state
                     self.send((self.instance, new_message), "acceptors")
-                    self.instances_start_time[self.instance] = time.time()
+                    with lock:
+                        self.instances_start_time[self.instance] = time.time()
                     self.instance += 1
 
                 elif message.msg_type == "1B":
@@ -124,26 +133,28 @@ class Proposer(Node):
         # todo check if this works
         while True:
             if self.leader == self.id:
-                for instance, start_time in self.instances_start_time.items():
-                    if instance not in self.instances_decided and time.time() - start_time > 5:
-                        state = self.instances[instance]
-                        state.ballot += 100
-                        if state.msg_type == "1B" and self.received_1B_count[instance] > 1:
-                            # we had reached a quorum; resend 2A
-                            new_message = Message(msg_type="2A",
-                                                  ballot=state.ballot,
-                                                  leader=self.leader,
-                                                  c_rnd=state.ballot,
-                                                  c_val=state.c_val)
-                            self.send((instance, new_message), "acceptors")
 
-                        else:
-                            # we didn't reach a quorum; resend 1A
-                            self.received_1B_count[instance] = 0
-                            new_message = Message(msg_type="1A", ballot=state.ballot, leader=self.leader)
+                with lock:
+                    for instance, start_time in self.instances_start_time.items():
+                        if instance not in self.instances_decided and time.time() - start_time > 5:
+                            state = self.instances[instance]
+                            state.ballot += 100
+                            if state.msg_type == "1B" and self.received_1B_count[instance] > 1:
+                                # we had reached a quorum; resend 2A
+                                new_message = Message(msg_type="2A",
+                                                      ballot=state.ballot,
+                                                      leader=self.leader,
+                                                      c_rnd=state.ballot,
+                                                      c_val=state.c_val)
+                                self.send((instance, new_message), "acceptors")
+
+                            else:
+                                # we didn't reach a quorum; resend 1A
+                                self.received_1B_count[instance] = 0
+                                new_message = Message(msg_type="1A", ballot=state.ballot, leader=self.leader)
+                                self.instances[instance] = state
+                                self.send((instance, new_message), "acceptors")
                             self.instances[instance] = state
-                            self.send((instance, new_message), "acceptors")
-                        self.instances[instance] = state
             time.sleep(2)
 
 
