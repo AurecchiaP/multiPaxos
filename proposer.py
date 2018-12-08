@@ -120,7 +120,8 @@ class Proposer(Node):
                                               c_val=state.c_val)
                         self.send((instance, new_message), "acceptors")
                 # update our state for this instance
-                self.instances_start_time[instance] = time.time()
+                with lock:
+                    self.instances_start_time[instance] = time.time()
                 self.instances[instance] = state
 
             # if the message is 2B
@@ -136,8 +137,9 @@ class Proposer(Node):
                         # save the value decided and send the decision to the learners
                         self.instances_decided[instance] = message.v_val
                         # delete the timeout for this instance
-                        if instance in self.instances_start_time:
-                            del self.instances_start_time[instance]
+                        with lock:
+                            if instance in self.instances_start_time:
+                                del self.instances_start_time[instance]
                         reply = Message(msg_type="DECISION", v_val=message.v_val)
                         self.send((instance, reply), "learners")
                         self.client_values[instance] = message.v_val

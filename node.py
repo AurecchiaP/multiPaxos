@@ -35,20 +35,10 @@ class Node:
         return new_socket
 
     def send(self, message, dst):
-        # serialize the message
+        # serialize the message and send it
         data = pickle.dumps(message)
-
-        # if the destination is my own group, send
-        if dst == self.role:
-            send_socket = self.create_socket(config[dst][0])
-            send_socket.sendto(data, self.group)
-            send_socket.close()
-
-        # if the destination is not my own group
-        else:
-            send_socket = self.create_socket(config[dst][0])
-            send_socket.sendto(data, tuple(config[dst]))
-            send_socket.close()
+        send_socket = self.create_socket(config[dst][0])
+        send_socket.sendto(data, tuple(config[dst]))
 
     def receive(self):
         # receive the message
