@@ -3,10 +3,8 @@ import pickle
 
 class Message:
 
-    # TODO instance atm not used, sent alongside the message
     def __init__(self, **kwargs):
         self.msg_type = kwargs.pop('msg_type', None)
-        self.instance = kwargs.pop('instance', None)
         self.leader = kwargs.pop('leader', None)
         self.id = kwargs.pop('id', None)
         self.ballot = kwargs.pop('ballot', 0)

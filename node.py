@@ -27,8 +27,7 @@ class Node:
     def create_socket(dst):
         # Create the datagram socket
         new_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # Set the time-to-live for messages to 1 so they do not go past the
-        # local network segment.
+        # Set the time-to-live for messages to 1 so they do not go past the local network segment
         new_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack('b', 1))
         new_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         new_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP,
@@ -36,18 +35,24 @@ class Node:
         return new_socket
 
     def send(self, message, dst):
+        # serialize the message
         data = pickle.dumps(message)
 
-        # if the destination is to my same role
+        # if the destination is my own group, send
         if dst == self.role:
             send_socket = self.create_socket(config[dst][0])
             send_socket.sendto(data, self.group)
+            send_socket.close()
+
+        # if the destination is not my own group
         else:
             send_socket = self.create_socket(config[dst][0])
             send_socket.sendto(data, tuple(config[dst]))
             send_socket.close()
 
     def receive(self):
+        # receive the message
         data, address = self.receive_socket.recvfrom(4096)
+        # deserialize it and return it
         instance, message = pickle.loads(data)
         return instance, message

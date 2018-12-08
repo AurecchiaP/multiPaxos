@@ -4,7 +4,6 @@ from node import Node
 from message import Message
 
 
-# FIXME a newly instantiated learner only sends catchup after receiving a message; might want to catchup before that
 class Learner(Node):
     def __init__(self, _id):
         super().__init__('learners')
@@ -18,7 +17,7 @@ class Learner(Node):
             # receive a message
             instance, message = self.receive()
             # if it is a decision message (2B)
-            if message.msg_type == "2B":
+            if message.msg_type == "DECISION":
                 # if this instance is the greatest one we have seen so far, update the max_instance
                 if instance > self.max_instance:
                     self.max_instance = instance
@@ -29,10 +28,13 @@ class Learner(Node):
                 while self.last_delivered < self.max_instance and self.last_delivered + 1 in self.received_decisions:
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
+                # check if there are more missing messages
                 self.ask_missing_values()
 
+            # if we received a reply of type CATCHUP
             elif message.msg_type == "CATCHUP_B":
                 received_values = message.v_val
+                # a catchup message contains a dict of values instead of only one, to make the catchup faster
                 for instance, value in received_values.items():
                     if instance not in self.received_decisions:
                         self.received_decisions[instance] = value
@@ -40,15 +42,17 @@ class Learner(Node):
                 while self.last_delivered < self.max_instance and self.last_delivered + 1 in self.received_decisions:
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
-
+                # check if there are more missing messages
                 self.ask_missing_values()
 
     def ask_missing_values(self):
+        # go through the list of instances from the last printed/delivered one to the maximum one we have received,
+        # store the missing ones, and ask them to the proposers in chunks of 20 at a time to avoid having huge messages
         missing_values = []
         for instance in range(self.last_delivered + 1, self.max_instance + 1):
             if instance not in self.received_decisions:
                 missing_values.append(instance)
-            # todo make sure that this still fits in the packets
+
         if len(missing_values) > 0:
             chunks = [missing_values[x:x + 20] for x in range(0, len(missing_values), 20)]
             for chunk in chunks:

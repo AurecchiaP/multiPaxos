@@ -16,7 +16,6 @@ class Acceptor(Node):
             # print("\n================= received message =================")
             # print('instance= ' + str(instance) + "\n" + message.to_string())
             # upon receive 1A
-            # TODO should I check if message was sent by leader? does the acceptor even know who the leader is?
             if message.msg_type == "1A":
                 if instance not in self.instances:
                     self.instances[instance] = Message()
@@ -25,7 +24,7 @@ class Acceptor(Node):
                 if message.ballot > state.ballot:
                     # update local state
                     state.ballot = message.ballot
-                    # send reply
+                    # send reply 1B to the proposers
                     reply = Message(msg_type="1B",
                                     leader=message.leader,
                                     ballot=state.ballot,
@@ -34,9 +33,13 @@ class Acceptor(Node):
                     self.send((instance, reply), "proposers")
                 self.instances[instance] = state
 
+            # upon receive 2A
             elif message.msg_type == "2A":
+                # if we hadn't previously received a 1A for this instance, do nothing
                 if instance not in self.instances:
                     continue
+
+                # update our current state, and if the round is higher than the previous one, send a 2B reply
                 state = self.instances[instance]
                 if message.c_rnd >= state.ballot:
                     state.v_rnd = message.c_rnd
