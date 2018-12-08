@@ -1,6 +1,7 @@
 import sys
 import threading
 import time
+import queue
 
 from node import Node
 from message import Message
@@ -30,15 +31,26 @@ class Proposer(Node):
         self.instances_start_time = {}  # dict {instance : time} that stores when we started this instance
 
         # create the two threads for the timeout of messages and the leader election messages
+        self.handler_thread = threading.Thread(target=self.message_handler, name="handler_thread", daemon=True)
         self.timeout_thread = threading.Thread(target=self.message_timeout, name="timeout_thread", daemon=True)
         self.election_thread = threading.Thread(target=self.leader_election, name="election_thread", daemon=True)
 
+        self.message_queue = queue.Queue()
+
     def receiver_loop(self):
+        self.handler_thread.start()
         self.election_thread.start()
         self.timeout_thread.start()
         while True:
             instance, message = self.receive()
+            self.message_queue.put((instance, message))
 
+    def message_handler(self):
+        while True:
+            while self.message_queue.empty():
+                continue
+            # instance, message = self.receive()
+            instance, message = self.message_queue.get()
             # if self.leader == self.id and message.msg_type != "ELECTION" and message.msg_type != "0":
             # print("\n================= received message =================")
             # print('instance= ' + str(instance) + "\n" + message.to_string())

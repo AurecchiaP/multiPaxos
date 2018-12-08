@@ -9,7 +9,7 @@ class Client(Node):
     def __init__(self, _id):
         super().__init__('clients')
         self.id = _id           # id of the client
-        self.count = 0
+        # self.count = 0
 
     def await_user_input(self):
         try:
@@ -19,10 +19,10 @@ class Client(Node):
                 message = Message(msg_type="0", v_val=value)
                 self.send((None, message), "proposers")
                 # if we run the whole thing on one machine, this may avoid the OS getting overfilled with messages
-                self.count += 1
-                if self.count == 250:
-                    self.count = 0
-                    time.sleep(2)
+                # self.count += 1
+                # if self.count == 250:
+                #     self.count = 0
+                #     time.sleep(.5)
         except EOFError:
             print("EOF reached")
             sys.exit()
