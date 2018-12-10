@@ -2,6 +2,7 @@ import sys
 
 from node import Node
 from message import Message
+import time
 
 
 class Learner(Node):
@@ -11,6 +12,7 @@ class Learner(Node):
         self.last_delivered = -1        # counter of the last printed decision
         self.max_instance = -1          # counter of the last printed decision
         self.received_decisions = {}    # dict of {paxos_instance : decision}
+        self.timeout = 0
 
     def receiver_loop(self):
         while True:
@@ -29,8 +31,9 @@ class Learner(Node):
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
                 # check if there are more missing messages
-                # fixme maybe don't ask so often
-                # self.ask_missing_values()
+                if time.time() - self.timeout > 2:
+                    self.ask_missing_values()
+                    self.timeout = time.time()
 
             # if we received a reply of type CATCHUP
             elif message.msg_type == "CATCHUP_B":
@@ -44,7 +47,9 @@ class Learner(Node):
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
                 # check if there are more missing messages
-                # self.ask_missing_values()
+                if time.time() - self.timeout > 2:
+                    self.ask_missing_values()
+                    self.timeout = time.time()
 
     def ask_missing_values(self):
         # go through the list of instances from the last printed/delivered one to the maximum one we have received,

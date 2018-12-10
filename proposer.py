@@ -56,9 +56,9 @@ class Proposer(Node):
 
             # instance, message = self.message_queue.get()
             # if self.leader == self.id and message.msg_type != "ELECTION" and message.msg_type != "0":
-            if self.leader == self.id and message.msg_type != "ELECTION":
-                print("\n================= received message =================")
-                print('instance= ' + str(instance) + "\n" + message.to_string())
+            # if self.leader == self.id and message.msg_type != "ELECTION":
+            print("\n================= received message =================")
+            print('instance= ' + str(instance) + "\n" + message.to_string())
 
             # handle an ELECTION message received by other proposers
             if message.msg_type == "ELECTION":
@@ -124,7 +124,6 @@ class Proposer(Node):
                         # choose the value to propose (one received from an acceptor or one received from a client)
                         if self.largest_v_rnd[instance] != 0:
                             state.c_val = message.v_val
-                            # FIXME START ONE MORE PAXOS INSTANCE
                             self.send_1A()
                             self.instances_values[instance] = message.v_val
                             self.instances_decided[instance] = state.c_val
@@ -152,7 +151,7 @@ class Proposer(Node):
                 self.instances[instance] = state
 
             # if the message is 2B
-            # fixme others proposers should see decisions too
+            # todo others proposers should see decisions too
             elif message.msg_type == "2B" and message.leader == self.leader and self.leader == self.id:
                 # load the state
                 state = self.instances[instance]
