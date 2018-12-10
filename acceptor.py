@@ -10,6 +10,7 @@ class Acceptor(Node):
         self.id = _id        # id of the acceptor
         self.instances = {}  # set of Paxos instances, with {instance_number : state}
 
+    # function that receives messages from the proposers and replies following the Paxos rules
     def receiver_loop(self):
         while True:
             instance, message = self.receive()

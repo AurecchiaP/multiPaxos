@@ -13,33 +13,29 @@ class Proposer(Node):
     def __init__(self, _id):
         super().__init__('proposers')
         # Proposer's basic state
-        self.id = _id                # id of the proposer
-        self.leader = self.id        # current leader, initialised to myself
-        self.client_values = queue.Queue()
-        # self.client_values = {}      # dict {paxos_instance : val} that stores the values received by clients and their
-                                     # attempted paxos instance
+        self.id = _id                       # id of the proposer
+        self.leader = self.id               # current leader, initialised to myself
+        self.client_values = queue.Queue()  # queue of the values received from the clients
+        self.message_queue = queue.Queue()  # queue of the messages received
 
-        # information on the various paxos instances
+        # information on the various Paxos instances
         self.instance = 0            # number of most recent Paxos instance
-        self.instances_decided = {}  # dict {paxos_instance : decision} keeps track of which instances have been decided
-        self.instances = {}          # dict {paxos_instance : state} stores the Paxos state for each instance
-        self.received_1B_count = {}  # dict {paxos_instance : val} that stores the number of msg received for Paxos inst
-        self.received_2B_count = {}  # dict {paxos_instance : val} that stores the number of msg received for Paxos inst
-        self.largest_v_rnd = {}      # dict {paxos_instance : val} that stores the largest v_rnd received for Paxos inst
+        self.instances_decided = {}  # dict {Paxos_instance : decision} keeps track of which instances have been decided
+        self.instances = {}          # dict {Paxos_instance : state} stores the Paxos state(a Message) for each instance
+        self.received_1B_count = {}  # dict {Paxos_instance : val} that stores the number of msg received for Paxos inst
+        self.received_2B_count = {}  # dict {Paxos_instance : val} that stores the number of msg received for Paxos inst
+        self.largest_v_rnd = {}      # dict {Paxos_instance : val} that stores the largest v_rnd received for Paxos inst
 
         # information used for leader election and timeout of messages
         self.proposers_pings = {}       # dict {proposer_id : time} that stores when we received the last ping from them
         self.instances_start_time = {}  # dict {instance : time} that stores when we started this instance
 
-        # create the two threads for the timeout of messages and the leader election messages
+        # create 3 threads: one handles the messages received, one handles the timeout of messages, one the election
         self.handler_thread = threading.Thread(target=self.message_handler, name="handler_thread", daemon=True)
         self.timeout_thread = threading.Thread(target=self.message_timeout, name="timeout_thread", daemon=True)
         self.election_thread = threading.Thread(target=self.leader_election, name="election_thread", daemon=True)
 
-        self.message_queue = queue.Queue()
-
-        self.instances_values = {}
-
+    # function that continuously gets the received messages from the socket and puts them in a queue
     def receiver_loop(self):
         self.handler_thread.start()
         self.election_thread.start()
@@ -48,17 +44,14 @@ class Proposer(Node):
             instance, message = self.receive()
             self.message_queue.put((instance, message))
 
+    # function that pops the received messages from a queue and handles them depending on their type; they can be of
+    # type ELECTION (for leader election), type CATCHUP_A (a request from a learner to resend previous decisions),
+    # type 0 (a message from a client for a value to be proposed), and 1B and 2B for Paxos
     def message_handler(self):
         while True:
             if self.message_queue.empty():
                 continue
             instance, message = self.message_queue.get()
-
-            # instance, message = self.message_queue.get()
-            # if self.leader == self.id and message.msg_type != "ELECTION" and message.msg_type != "0":
-            # if self.leader == self.id and message.msg_type != "ELECTION":
-            print("\n================= received message =================")
-            print('instance= ' + str(instance) + "\n" + message.to_string())
 
             # handle an ELECTION message received by other proposers
             if message.msg_type == "ELECTION":
@@ -124,8 +117,8 @@ class Proposer(Node):
                         # choose the value to propose (one received from an acceptor or one received from a client)
                         if self.largest_v_rnd[instance] != 0:
                             state.c_val = message.v_val
-                            self.send_1A()
-                            self.instances_values[instance] = message.v_val
+                            # if this Paxos instance was already bound to a value, start a new 1A (Paxos instance)
+                            self.re_send_1A()
                             self.instances_decided[instance] = state.c_val
                             # send the 2A
                             new_message = Message(msg_type="2A",
@@ -137,7 +130,6 @@ class Proposer(Node):
                         else:
                             if not self.client_values.empty():
                                 state.c_val = self.client_values.get()
-                                self.instances_values[instance] = state.c_val
                                 # send the 2A
                                 new_message = Message(msg_type="2A",
                                                       ballot=state.ballot,
@@ -151,7 +143,6 @@ class Proposer(Node):
                 self.instances[instance] = state
 
             # if the message is 2B
-            # todo others proposers should see decisions too
             elif message.msg_type == "2B" and message.leader == self.leader and self.leader == self.id:
                 # load the state
                 state = self.instances[instance]
@@ -171,7 +162,9 @@ class Proposer(Node):
                         self.send((instance, reply), "learners")
                         # self.client_values[instance] = message.v_val
 
-    def send_1A(self):
+    # function that starts a new Paxos instance; it is called when a proposer had started a Paxos instance with an
+    # instance number that had already been used before, and therefore the proposer couldn't propose its own value
+    def re_send_1A(self):
         self.instances[self.instance] = Message()
         state = self.instances[self.instance]
         # initialize the state for this instance
@@ -188,6 +181,7 @@ class Proposer(Node):
             self.instances_start_time[self.instance] = time.time()
         self.instance += 1
 
+    # function for leader election; every 2 seconds it sends a message to other proposers to find out who the leader is
     def leader_election(self):
         while True:
             message = Message(msg_type="ELECTION", leader=self.leader, id=self.id)

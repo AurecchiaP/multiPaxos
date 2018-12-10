@@ -4,6 +4,7 @@ import os
 import pickle
 
 
+# loads the IP/port configurations from the file config.conf
 def load_config():
     conf = {}
     with open(os.getcwd() + '/config.conf') as f:
