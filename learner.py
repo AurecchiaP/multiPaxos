@@ -29,7 +29,8 @@ class Learner(Node):
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
                 # check if there are more missing messages
-                self.ask_missing_values()
+                # fixme maybe don't ask so often
+                # self.ask_missing_values()
 
             # if we received a reply of type CATCHUP
             elif message.msg_type == "CATCHUP_B":
@@ -43,7 +44,7 @@ class Learner(Node):
                     self.last_delivered += 1
                     print(self.received_decisions[self.last_delivered], flush=True)
                 # check if there are more missing messages
-                self.ask_missing_values()
+                # self.ask_missing_values()
 
     def ask_missing_values(self):
         # go through the list of instances from the last printed/delivered one to the maximum one we have received,
