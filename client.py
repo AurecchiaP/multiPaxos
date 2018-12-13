@@ -6,8 +6,8 @@ from message import Message
 
 
 class Client(Node):
-    def __init__(self, _id):
-        super().__init__('clients')
+    def __init__(self, _id, config_path):
+        super().__init__('clients', config_path)
         self.id = _id           # id of the client
         # self.count = 0
 
@@ -29,8 +29,8 @@ class Client(Node):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("give the id of the client")
+    if len(sys.argv) < 3:
+        print("give the id of the client and the config path")
         sys.exit()
-    client = Client(sys.argv[1])
+    client = Client(sys.argv[1], sys.argv[2])
     client.await_user_input()

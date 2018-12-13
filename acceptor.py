@@ -5,8 +5,8 @@ from message import Message
 
 
 class Acceptor(Node):
-    def __init__(self, _id):
-        super().__init__('acceptors')
+    def __init__(self, _id, config_path):
+        super().__init__('acceptors', config_path)
         self.id = _id        # id of the acceptor
         self.instances = {}  # set of Paxos instances, with {instance_number : state}
 
@@ -55,8 +55,8 @@ class Acceptor(Node):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("give the id of the acceptors")
+    if len(sys.argv) < 3:
+        print("give the id of the acceptors and the config path")
         sys.exit()
-    acceptor = Acceptor(sys.argv[1])
+    acceptor = Acceptor(sys.argv[1], sys.argv[2])
     acceptor.receiver_loop()

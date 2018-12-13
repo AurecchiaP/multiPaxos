@@ -10,8 +10,8 @@ lock = threading.Lock()
 
 
 class Proposer(Node):
-    def __init__(self, _id):
-        super().__init__('proposers')
+    def __init__(self, _id, config_path):
+        super().__init__('proposers', config_path)
         # Proposer's basic state
         self.id = _id                       # id of the proposer
         self.leader = self.id               # current leader, initialised to myself
@@ -218,8 +218,8 @@ class Proposer(Node):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("give the id of the proposer")
+    if len(sys.argv) < 3:
+        print("give the id of the proposer and the config_path")
         sys.exit()
-    proposer = Proposer(sys.argv[1])
+    proposer = Proposer(sys.argv[1], sys.argv[2])
     proposer.receiver_loop()

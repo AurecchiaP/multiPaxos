@@ -6,8 +6,8 @@ import time
 
 
 class Learner(Node):
-    def __init__(self, _id):
-        super().__init__('learners')
+    def __init__(self, _id, config_path):
+        super().__init__('learners', config_path)
         self.id = _id                   # id of learner
         self.last_delivered = -1        # counter of the last printed decision
         self.max_instance = -1          # counter of the last printed decision
@@ -67,8 +67,8 @@ class Learner(Node):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("give the id of the learners")
+    if len(sys.argv) < 3:
+        print("give the id of the learners and the config_path")
         sys.exit()
-    learner = Learner(sys.argv[1])
+    learner = Learner(sys.argv[1], sys.argv[2])
     learner.receiver_loop()

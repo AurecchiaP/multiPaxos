@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python3 acceptor.py $1
+python3 acceptor.py $1 $2

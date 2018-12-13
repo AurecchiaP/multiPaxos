@@ -23,17 +23,17 @@ own new Paxos instances.
 
 For each Node type (Proposer, Acceptor, Learner, Client) there is a .sh script provided to start it; from the root of the project, where the .sh files are located, one can write:
 
-```[shell]
-    ./<node script> multiPaxos <id>
-```
+---
+    <node script> <id> <path to config file>
+---
 
 For example, if we want to start a proposer with id=0 we would do:
 
-```[shell]
-    ./proposer.sh multiPaxos 0
-```
+---
+    ./proposer.sh 0 paxos.conf
+---
 
-Each Node loads the IP/port configurations from the file config.conf, which can be modified to change said settings.
+Where the config file are the IP/port configurations. Note that the path is relative to the root of the project.
 
 ## Tests run
 
