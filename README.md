@@ -33,7 +33,7 @@ For example, if we want to start a proposer with id=0 we would do:
     ./proposer.sh 0 paxos.conf
 ---
 
-Where the config file are the IP/port configurations. Note that the path is relative to the root of the project.
+Where the config file are the IP/port configurations. Note that the path is the absolute path to the file.
 
 ## Tests run
 

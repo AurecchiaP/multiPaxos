@@ -28,7 +28,8 @@ class Node:
     @staticmethod
     def load_config(config_path):
         conf = {}
-        with open(os.getcwd() + "/" + config_path) as f:
+        # with open(os.getcwd() + "/" + config_path) as f:
+        with open(config_path) as f:
             for line in f:
                 conf_line = line.split()
                 conf[conf_line[0]] = [conf_line[1], int(conf_line[2])]
